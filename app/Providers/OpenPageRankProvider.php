@@ -24,7 +24,7 @@ class OpenPageRankProvider implements PageRankProviderInterface
                 'domains' => $domains
             ]);
         } catch (Throwable $e) {
-            Log::error($e);
+            Log::error($e->getMessage());
 
             return [];
         }
@@ -43,20 +43,26 @@ class OpenPageRankProvider implements PageRankProviderInterface
      */
     private function getPageRanksFromResponse(string $responseBody): array
     {
-        $decodedResponseBody = json_decode($responseBody);
-        $response = $decodedResponseBody->response;
+        $decodedResponseBody = json_decode($responseBody, true);
+        if (!is_array($decodedResponseBody)) {
+            Log::error('Invalid response: ' . json_encode($responseBody));
+
+            return [];
+        }
+
+        $response = $decodedResponseBody['response'] ?? [];
         $pageRanks = [];
         foreach ($response as $pageRank) {
             $rank = null;
-            if (200 === $pageRank->status_code) {
-                $rank = $pageRank->rank ?? null;
+            if (200 === $pageRank['status_code']) {
+                $rank = $pageRank['rank'] ?? null;
             }
 
-            if (!isset($pageRank->domain)) {
+            if (!isset($pageRank['domain'])) {
                 continue;
             }
 
-            $pageRanks[$pageRank->domain] = $rank;
+            $pageRanks[$pageRank['domain']] = $rank;
         }
 
         return $pageRanks;

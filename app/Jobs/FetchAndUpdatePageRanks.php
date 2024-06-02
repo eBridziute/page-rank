@@ -32,6 +32,13 @@ class FetchAndUpdatePageRanks implements ShouldQueue
         }
 
         $pageRanksFromFile = json_decode($pageRanksFile, true);
+        if (!is_array($pageRanksFromFile)) {
+            Log::error('File is invalid: ' . self::PAGE_RANKS_FILE_PATH);
+
+            return;
+        }
+
+
         foreach(array_chunk($pageRanksFromFile, self::BATCH_SIZE) as $batch) {
             $domains = [];
             foreach ($batch as $pageRank) {
